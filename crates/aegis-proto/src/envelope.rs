@@ -3,13 +3,13 @@ use serde::{Deserialize, Serialize};
 
 use crate::{EnvelopeId, IdentityId, ProtoError, SuiteId};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct EncryptedBlob {
     pub nonce_b64: String,
     pub ciphertext_b64: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Envelope {
     pub version: u8,
     pub envelope_id: EnvelopeId,

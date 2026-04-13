@@ -31,6 +31,7 @@ impl CryptoSuite for DemoSuite {
             .map_err(|e| CryptoError::Serialization(e.to_string()))?;
 
         let cipher = XChaCha20Poly1305::new(Key::from_slice(&self.key));
+
         let mut nonce = [0u8; 24];
         rand::thread_rng().fill_bytes(&mut nonce);
 
@@ -48,6 +49,7 @@ impl CryptoSuite for DemoSuite {
         let nonce = STANDARD
             .decode(&blob.nonce_b64)
             .map_err(|_| CryptoError::InvalidKeyMaterial)?;
+
         let ciphertext = STANDARD
             .decode(&blob.ciphertext_b64)
             .map_err(|_| CryptoError::InvalidKeyMaterial)?;

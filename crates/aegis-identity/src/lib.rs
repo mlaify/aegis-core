@@ -3,28 +3,18 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum IdentityError {
-    #[error("identity document missing signing keys")]
-    MissingSigningKeys,
-
-    #[error("identity document missing encryption keys")]
-    MissingEncryptionKeys,
-
-    #[error("identity id mismatch")]
-    IdentityMismatch,
+    #[error("invalid identity id")]
+    InvalidIdentityId,
 }
 
-pub fn validate_identity_document(doc: &IdentityDocument) -> Result<(), IdentityError> {
-    if doc.signing_keys.is_empty() {
-        return Err(IdentityError::MissingSigningKeys);
+pub fn parse_identity_id(input: &str) -> Result<IdentityId, IdentityError> {
+    if input.starts_with("amp:did:key:") {
+        Ok(IdentityId(input.to_string()))
+    } else {
+        Err(IdentityError::InvalidIdentityId)
     }
-
-    if doc.encryption_keys.is_empty() {
-        return Err(IdentityError::MissingEncryptionKeys);
-    }
-
-    Ok(())
 }
 
-pub fn parse_identity_id(raw: &str) -> IdentityId {
-    IdentityId(raw.to_string())
+pub fn supports_suite(doc: &IdentityDocument, suite: &str) -> bool {
+    doc.supported_suites.iter().any(|s| s == suite)
 }

@@ -7,5 +7,4 @@ authors.workspace = true
 
 [dependencies]
 aegis-proto = { path = "../aegis-proto" }
-aegis-crypto = { path = "../aegis-crypto" }
 serde_json.workspace = true

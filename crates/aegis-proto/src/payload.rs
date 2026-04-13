@@ -1,19 +1,19 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct PrivateHeaders {
     pub subject: Option<String>,
     pub thread_id: Option<String>,
     pub in_reply_to: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct MessageBody {
     pub mime: String,
     pub content: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct AttachmentManifest {
     pub attachment_id: String,
     pub filename: String,
@@ -23,7 +23,7 @@ pub struct AttachmentManifest {
     pub content_key_wrap_b64: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct PrivatePayload {
     pub private_headers: PrivateHeaders,
     pub body: MessageBody,
