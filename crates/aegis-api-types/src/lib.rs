@@ -25,6 +25,12 @@ pub struct EnvelopeLifecycleResponse {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct RelayCleanupResponse {
+    pub expired_removed: usize,
+    pub orphan_ack_removed: usize,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct RelayError {
     pub code: String,
     pub message: String,
@@ -105,6 +111,20 @@ mod tests {
         let json = serde_json::to_string(&response).expect("serialize lifecycle response");
         let decoded: EnvelopeLifecycleResponse =
             serde_json::from_str(&json).expect("deserialize lifecycle response");
+
+        assert_eq!(decoded, response);
+    }
+
+    #[test]
+    fn relay_cleanup_response_json_round_trip() {
+        let response = RelayCleanupResponse {
+            expired_removed: 3,
+            orphan_ack_removed: 2,
+        };
+
+        let json = serde_json::to_string(&response).expect("serialize cleanup response");
+        let decoded: RelayCleanupResponse =
+            serde_json::from_str(&json).expect("deserialize cleanup response");
 
         assert_eq!(decoded, response);
     }
