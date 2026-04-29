@@ -14,6 +14,12 @@ impl EnvelopeId {
     }
 }
 
+impl Default for EnvelopeId {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PublicKeyRecord {
     pub key_id: String,
