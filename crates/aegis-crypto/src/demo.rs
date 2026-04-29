@@ -6,13 +6,14 @@ use chacha20poly1305::{
 };
 use rand::RngCore;
 
-use crate::{CryptoError, CryptoSuite, EnvelopeSigner, EnvelopeVerifier};
+use crate::{CryptoError, EnvelopeSigner, EnvelopeVerifier, KeyAgreement, PayloadCipher};
 
 pub struct DemoSuite {
     key: [u8; 32],
 }
 
 impl DemoSuite {
+    /// Local-development helper only. This passphrase-derived keying model is non-production.
     pub fn from_passphrase(passphrase: &str) -> Self {
         let hash = blake3::hash(passphrase.as_bytes());
         let mut key = [0u8; 32];
@@ -21,7 +22,7 @@ impl DemoSuite {
     }
 }
 
-impl CryptoSuite for DemoSuite {
+impl PayloadCipher for DemoSuite {
     fn suite_id(&self) -> SuiteId {
         SuiteId::DemoXChaCha20Poly1305
     }
@@ -67,6 +68,8 @@ impl CryptoSuite for DemoSuite {
     }
 }
 
+impl KeyAgreement for DemoSuite {}
+
 impl EnvelopeSigner for DemoSuite {
     fn sign_envelope(&self, envelope: &Envelope) -> Result<String, CryptoError> {
         let mut to_sign = envelope.clone();
@@ -94,6 +97,28 @@ impl EnvelopeVerifier for DemoSuite {
 mod tests {
     use super::*;
     use aegis_proto::{IdentityId, PrivateHeaders};
+
+    #[test]
+    fn encrypt_and_decrypt_payload_round_trip() {
+        let suite = DemoSuite::from_passphrase("dev-passphrase");
+        let payload = PrivatePayload {
+            private_headers: PrivateHeaders {
+                subject: Some("payload".to_string()),
+                thread_id: Some("thread-1".to_string()),
+                in_reply_to: None,
+            },
+            body: aegis_proto::MessageBody {
+                mime: "text/plain".to_string(),
+                content: "hello".to_string(),
+            },
+            attachments: vec![],
+            extensions: serde_json::json!({ "k": "v" }),
+        };
+
+        let encrypted = suite.encrypt_payload(&payload).expect("encrypt");
+        let decrypted = suite.decrypt_payload(&encrypted).expect("decrypt");
+        assert_eq!(decrypted, payload);
+    }
 
     #[test]
     fn sign_and_verify_round_trip() {
@@ -156,5 +181,12 @@ mod tests {
             result,
             Err(CryptoError::SignatureVerificationFailed)
         ));
+    }
+
+    #[test]
+    fn key_agreement_is_explicitly_unsupported_for_demo_suite() {
+        let suite = DemoSuite::from_passphrase("dev-passphrase");
+        let result = suite.derive_shared_secret(b"local", b"peer");
+        assert!(matches!(result, Err(CryptoError::KeyAgreementUnsupported)));
     }
 }
