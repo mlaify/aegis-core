@@ -8,3 +8,6 @@ authors.workspace = true
 [dependencies]
 aegis-proto = { path = "../aegis-proto" }
 thiserror.workspace = true
+serde.workspace = true
+base64.workspace = true
+rand.workspace = true

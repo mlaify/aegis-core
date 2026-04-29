@@ -1,4 +1,7 @@
 use aegis_proto::{IdentityDocument, IdentityId};
+use base64::{engine::general_purpose::STANDARD, Engine as _};
+use rand::RngCore;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use thiserror::Error;
 
@@ -6,6 +9,17 @@ use thiserror::Error;
 pub enum IdentityError {
     #[error("invalid identity id")]
     InvalidIdentityId,
+    #[error("invalid local dev signing key material")]
+    InvalidLocalDevSigningKeyMaterial,
+}
+
+pub const LOCAL_DEV_SIGNING_ALGORITHM: &str = "AMP-DEV-SIGN-BLAKE3-V1";
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct LocalDevSigningKeyMaterial {
+    pub key_id: String,
+    pub algorithm: String,
+    pub private_key_b64: String,
 }
 
 pub fn parse_identity_id(input: &str) -> Result<IdentityId, IdentityError> {
@@ -14,6 +28,38 @@ pub fn parse_identity_id(input: &str) -> Result<IdentityId, IdentityError> {
     } else {
         Err(IdentityError::InvalidIdentityId)
     }
+}
+
+pub fn generate_local_dev_signing_key_material(key_id: &str) -> LocalDevSigningKeyMaterial {
+    let mut key = [0u8; 32];
+    rand::thread_rng().fill_bytes(&mut key);
+    LocalDevSigningKeyMaterial {
+        key_id: key_id.to_string(),
+        algorithm: LOCAL_DEV_SIGNING_ALGORITHM.to_string(),
+        private_key_b64: STANDARD.encode(key),
+    }
+}
+
+pub fn decode_local_dev_signing_key(
+    material: &LocalDevSigningKeyMaterial,
+) -> Result<Vec<u8>, IdentityError> {
+    if material.algorithm != LOCAL_DEV_SIGNING_ALGORITHM {
+        return Err(IdentityError::InvalidLocalDevSigningKeyMaterial);
+    }
+    let bytes = STANDARD
+        .decode(material.private_key_b64.as_bytes())
+        .map_err(|_| IdentityError::InvalidLocalDevSigningKeyMaterial)?;
+    if bytes.len() != 32 {
+        return Err(IdentityError::InvalidLocalDevSigningKeyMaterial);
+    }
+    Ok(bytes)
+}
+
+pub fn local_dev_public_key_b64(
+    material: &LocalDevSigningKeyMaterial,
+) -> Result<String, IdentityError> {
+    decode_local_dev_signing_key(material)?;
+    Ok(material.private_key_b64.clone())
 }
 
 pub fn is_valid_identity_id(input: &str) -> bool {
@@ -163,5 +209,14 @@ mod tests {
             .resolve_identity_document(&IdentityId("amp:did:key:z6MkMissing".to_string()))
             .expect("resolve missing");
         assert!(missing.is_none());
+    }
+
+    #[test]
+    fn local_dev_signing_material_round_trip() {
+        let material = generate_local_dev_signing_key_material("sig-local-1");
+        let key = decode_local_dev_signing_key(&material).expect("decode key");
+        assert_eq!(key.len(), 32);
+        let public_b64 = local_dev_public_key_b64(&material).expect("derive public b64");
+        assert_eq!(public_b64, material.private_key_b64);
     }
 }

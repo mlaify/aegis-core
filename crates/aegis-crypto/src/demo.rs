@@ -20,6 +20,22 @@ impl DemoSuite {
         key.copy_from_slice(hash.as_bytes());
         Self { key }
     }
+
+    pub fn from_signing_key_bytes(key_material: &[u8]) -> Result<Self, CryptoError> {
+        if key_material.len() != 32 {
+            return Err(CryptoError::InvalidKeyMaterial);
+        }
+        let mut key = [0u8; 32];
+        key.copy_from_slice(key_material);
+        Ok(Self { key })
+    }
+
+    pub fn from_signing_key_b64(signing_key_b64: &str) -> Result<Self, CryptoError> {
+        let key = STANDARD
+            .decode(signing_key_b64.as_bytes())
+            .map_err(|_| CryptoError::InvalidKeyMaterial)?;
+        Self::from_signing_key_bytes(&key)
+    }
 }
 
 impl PayloadCipher for DemoSuite {

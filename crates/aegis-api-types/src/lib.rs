@@ -18,6 +18,13 @@ pub struct FetchEnvelopeResponse {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct EnvelopeLifecycleResponse {
+    pub recipient_id: String,
+    pub envelope_id: String,
+    pub status: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct RelayError {
     pub code: String,
     pub message: String,
@@ -83,6 +90,21 @@ mod tests {
         let json = serde_json::to_string(&response).expect("serialize relay error response");
         let decoded: RelayErrorResponse =
             serde_json::from_str(&json).expect("deserialize relay error response");
+
+        assert_eq!(decoded, response);
+    }
+
+    #[test]
+    fn envelope_lifecycle_response_json_round_trip() {
+        let response = EnvelopeLifecycleResponse {
+            recipient_id: "amp:did:key:z6MkRecipient".to_string(),
+            envelope_id: "550e8400-e29b-41d4-a716-446655440000".to_string(),
+            status: "acknowledged".to_string(),
+        };
+
+        let json = serde_json::to_string(&response).expect("serialize lifecycle response");
+        let decoded: EnvelopeLifecycleResponse =
+            serde_json::from_str(&json).expect("deserialize lifecycle response");
 
         assert_eq!(decoded, response);
     }
