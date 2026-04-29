@@ -1,0 +1,20 @@
+{
+  "identity_id": "amp:did:key:z6MkAlice",
+  "signed_prekeys": [
+    {
+      "key_id": "spk-1",
+      "algorithm": "x25519",
+      "public_key_b64": "c3BrLXB1Yi0x"
+    }
+  ],
+  "one_time_prekeys": [
+    {
+      "key_id": "otk-1",
+      "algorithm": "x25519",
+      "public_key_b64": "b3RrLXB1Yi0x"
+    }
+  ],
+  "supported_suites": ["AMP-DEMO-XCHACHA20POLY1305"],
+  "expires_at": "2026-12-31T23:59:59Z",
+  "signature": null
+}
