@@ -16,9 +16,9 @@ Shared Rust crates for the Aegis ecosystem.
 - `../aegis-spec/docs/implementation-conformance-v0.1.md`
 - `../aegis-docs/docs/architecture-overview.md` (human-oriented overview)
 
-## Current v0.1 Status
+## Current v0.1.0-alpha Status
 
-This repo implements draft/prototype core behavior for Aegis.
+This repo implements draft/prototype core behavior for Aegis `v0.1.0-alpha`.
 
 - demo crypto/signing is non-production
 - no production PQ suite implementation

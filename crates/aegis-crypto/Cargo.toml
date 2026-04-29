@@ -5,6 +5,10 @@ edition.workspace = true
 license.workspace = true
 authors.workspace = true
 
+[features]
+default = []
+experimental-pq = ["dep:pqcrypto-kyber", "dep:pqcrypto-traits"]
+
 [dependencies]
 aegis-proto = { path = "../aegis-proto" }
 serde.workspace = true
@@ -14,3 +18,5 @@ base64.workspace = true
 blake3.workspace = true
 rand.workspace = true
 chacha20poly1305.workspace = true
+pqcrypto-kyber = { version = "0.8.1", optional = true }
+pqcrypto-traits = { version = "0.3.5", optional = true }
