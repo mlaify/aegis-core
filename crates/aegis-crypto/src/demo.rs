@@ -1,4 +1,4 @@
-use aegis_proto::{EncryptedBlob, PrivatePayload, SuiteId};
+use aegis_proto::{EncryptedBlob, Envelope, PrivatePayload, SuiteId};
 use base64::{engine::general_purpose::STANDARD, Engine as _};
 use chacha20poly1305::{
     aead::{Aead, KeyInit},
@@ -6,7 +6,7 @@ use chacha20poly1305::{
 };
 use rand::RngCore;
 
-use crate::{CryptoError, CryptoSuite};
+use crate::{CryptoError, CryptoSuite, EnvelopeSigner, EnvelopeVerifier};
 
 pub struct DemoSuite {
     key: [u8; 32],
@@ -27,8 +27,8 @@ impl CryptoSuite for DemoSuite {
     }
 
     fn encrypt_payload(&self, payload: &PrivatePayload) -> Result<EncryptedBlob, CryptoError> {
-        let serialized = serde_json::to_vec(payload)
-            .map_err(|e| CryptoError::Serialization(e.to_string()))?;
+        let serialized =
+            serde_json::to_vec(payload).map_err(|e| CryptoError::Serialization(e.to_string()))?;
 
         let cipher = XChaCha20Poly1305::new(Key::from_slice(&self.key));
 
@@ -63,7 +63,98 @@ impl CryptoSuite for DemoSuite {
             .decrypt(XNonce::from_slice(&nonce), ciphertext.as_ref())
             .map_err(|_| CryptoError::Decryption)?;
 
-        serde_json::from_slice(&plaintext)
-            .map_err(|e| CryptoError::Serialization(e.to_string()))
+        serde_json::from_slice(&plaintext).map_err(|e| CryptoError::Serialization(e.to_string()))
+    }
+}
+
+impl EnvelopeSigner for DemoSuite {
+    fn sign_envelope(&self, envelope: &Envelope) -> Result<String, CryptoError> {
+        let mut to_sign = envelope.clone();
+        to_sign.outer_signature_b64 = None;
+        let encoded =
+            serde_json::to_vec(&to_sign).map_err(|e| CryptoError::Serialization(e.to_string()))?;
+
+        let signature = blake3::keyed_hash(&self.key, &encoded);
+        Ok(STANDARD.encode(signature.as_bytes()))
+    }
+}
+
+impl EnvelopeVerifier for DemoSuite {
+    fn verify_envelope(&self, envelope: &Envelope, signature_b64: &str) -> Result<(), CryptoError> {
+        let expected = self.sign_envelope(envelope)?;
+        if expected == signature_b64 {
+            Ok(())
+        } else {
+            Err(CryptoError::SignatureVerificationFailed)
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use aegis_proto::{IdentityId, PrivateHeaders};
+
+    #[test]
+    fn sign_and_verify_round_trip() {
+        let suite = DemoSuite::from_passphrase("dev-passphrase");
+        let payload = PrivatePayload {
+            private_headers: PrivateHeaders {
+                subject: Some("hi".to_string()),
+                thread_id: None,
+                in_reply_to: None,
+            },
+            body: aegis_proto::MessageBody {
+                mime: "text/plain".to_string(),
+                content: "hello".to_string(),
+            },
+            attachments: vec![],
+            extensions: serde_json::json!({}),
+        };
+        let encrypted = suite.encrypt_payload(&payload).expect("encrypt");
+        let envelope = Envelope::new(
+            IdentityId("amp:did:key:z6MkRecipient".to_string()),
+            Some(IdentityId("amp:did:key:z6MkSender".to_string())),
+            suite.suite_id(),
+            encrypted,
+        );
+
+        let signature = suite.sign_envelope(&envelope).expect("sign");
+        suite
+            .verify_envelope(&envelope, &signature)
+            .expect("verify");
+    }
+
+    #[test]
+    fn verify_fails_for_tampered_envelope() {
+        let suite = DemoSuite::from_passphrase("dev-passphrase");
+        let payload = PrivatePayload {
+            private_headers: PrivateHeaders {
+                subject: Some("hi".to_string()),
+                thread_id: None,
+                in_reply_to: None,
+            },
+            body: aegis_proto::MessageBody {
+                mime: "text/plain".to_string(),
+                content: "hello".to_string(),
+            },
+            attachments: vec![],
+            extensions: serde_json::json!({}),
+        };
+        let encrypted = suite.encrypt_payload(&payload).expect("encrypt");
+        let mut envelope = Envelope::new(
+            IdentityId("amp:did:key:z6MkRecipient".to_string()),
+            Some(IdentityId("amp:did:key:z6MkSender".to_string())),
+            suite.suite_id(),
+            encrypted,
+        );
+
+        let signature = suite.sign_envelope(&envelope).expect("sign");
+        envelope.content_type = "message/private-tampered".to_string();
+        let result = suite.verify_envelope(&envelope, &signature);
+        assert!(matches!(
+            result,
+            Err(CryptoError::SignatureVerificationFailed)
+        ));
     }
 }

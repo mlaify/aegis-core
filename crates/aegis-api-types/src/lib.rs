@@ -17,6 +17,17 @@ pub struct FetchEnvelopeResponse {
     pub envelopes: Vec<Envelope>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct RelayError {
+    pub code: String,
+    pub message: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct RelayErrorResponse {
+    pub error: RelayError,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -56,6 +67,22 @@ mod tests {
         let json = serde_json::to_string(&response).expect("serialize fetch response");
         let decoded: FetchEnvelopeResponse =
             serde_json::from_str(&json).expect("deserialize fetch response");
+
+        assert_eq!(decoded, response);
+    }
+
+    #[test]
+    fn relay_error_response_json_round_trip() {
+        let response = RelayErrorResponse {
+            error: RelayError {
+                code: "storage_error".to_string(),
+                message: "failed to store envelope".to_string(),
+            },
+        };
+
+        let json = serde_json::to_string(&response).expect("serialize relay error response");
+        let decoded: RelayErrorResponse =
+            serde_json::from_str(&json).expect("deserialize relay error response");
 
         assert_eq!(decoded, response);
     }

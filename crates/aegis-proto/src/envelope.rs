@@ -47,12 +47,10 @@ impl Envelope {
     }
 
     pub fn to_json_pretty(&self) -> Result<String, ProtoError> {
-        serde_json::to_string_pretty(self)
-            .map_err(|e| ProtoError::Serialization(e.to_string()))
+        serde_json::to_string_pretty(self).map_err(|e| ProtoError::Serialization(e.to_string()))
     }
 
     pub fn from_json(data: &str) -> Result<Self, ProtoError> {
-        serde_json::from_str(data)
-            .map_err(|e| ProtoError::Serialization(e.to_string()))
+        serde_json::from_str(data).map_err(|e| ProtoError::Serialization(e.to_string()))
     }
 }

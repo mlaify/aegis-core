@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "identity_id": "amp:did:key:z6MkAlice",
+  "aliases": ["alice@example.invalid", "alice"],
+  "signing_keys": [
+    {
+      "key_id": "sig-1",
+      "algorithm": "ed25519",
+      "public_key_b64": "c2lnLXB1Yi0x"
+    }
+  ],
+  "encryption_keys": [
+    {
+      "key_id": "enc-1",
+      "algorithm": "x25519",
+      "public_key_b64": "ZW5jLXB1Yi0x"
+    }
+  ],
+  "supported_suites": ["AMP-DEMO-XCHACHA20POLY1305"],
+  "relay_endpoints": ["http://127.0.0.1:8787"],
+  "signature": null
+}

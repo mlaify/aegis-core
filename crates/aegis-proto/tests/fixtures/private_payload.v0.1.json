@@ -1,0 +1,24 @@
+{
+  "private_headers": {
+    "subject": "hello",
+    "thread_id": "thread-123",
+    "in_reply_to": null
+  },
+  "body": {
+    "mime": "text/plain",
+    "content": "Hello from Aegis"
+  },
+  "attachments": [
+    {
+      "attachment_id": "att-1",
+      "filename": "note.txt",
+      "mime": "text/plain",
+      "size": 12,
+      "blob_ref": "blob://local/att-1",
+      "content_key_wrap_b64": "Y29udGVudC1rZXktd3JhcA=="
+    }
+  ],
+  "extensions": {
+    "example": true
+  }
+}
